@@ -26,6 +26,19 @@ GND  GND
 
 FYI: GPI: GPIO34-39 can only be set as input mode and do not have software-enabled pullup or pulldown functions.
 
+### Dev Notes
+
+#### Signal Strength
+
+```cpp
+int16_t strength = modem.getSignalQuality()
+```
+
+```
+99 not known or not detectable
+2 ... 30 --> Check Table here: https://m2msupport.net/m2msupport/atcsq-signal-quality/
+```
+
 ## Tip us
 
 If you like this project, please adapt the landingpage to your local stores, that
