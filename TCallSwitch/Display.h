@@ -17,14 +17,18 @@ class Display {
   private:
     Adafruit_SSD1351 tft;
     int line = 0;
+    uint16_t width = 0;
+    uint16_t height = 0;
 
   public:
     Display(uint16_t width_, uint16_t height_, int8_t cs_pin_, int8_t dc_pin_, int8_t mosi_pin_, int8_t sclk_pin_, int8_t rst_pin_);
 
     void setup();
-    void clear();
+    void clear(int background = 0);
     void drawLine(String text, uint16_t color = WHITE);
-
+    void qrcode(String text);
+    void payed();
+    void updateSignalStrength(int16_t strength);
 };
 
 #endif

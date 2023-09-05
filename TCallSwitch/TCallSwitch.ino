@@ -9,16 +9,20 @@
 // Bitcoin Swtich
 #define PORTAL_PIN 4
 
+#include "secrets.h"
+
 // Your GPRS credentials (leave empty, if not needed)
 const char apn[]      = GSM_APN; // APN (example: internet.vodafone.pt) use https://wiki.apnchanger.org
-const char gprsUser[] = ""; // GPRS User
-const char gprsPass[] = ""; // GPRS Password
-const char simPIN[]   = "";  // SIM card PIN (leave empty, if not defined)
+const char gprsUser[] = GSM_GPRS_USER; // GPRS User
+const char gprsPass[] = GSM_GPRS_PASS; // GPRS Password
+const char simPIN[]   = GSM_PIN;  // SIM card PIN (leave empty, if not defined)
 
 // Server details
 const char server[] = LNBITS_SERVER;  // server address
 const char resource[] = LNBITS_PATH;
-const int  port = LNBITS_PORT;                             // server port number
+
+const int  port = LNBITS_PORT; // server port number
+const char lnurl[] = LNBITS_LNURL;
 
 // TTGO T-Call pins
 #define MODEM_RST            5
@@ -55,7 +59,7 @@ const int  port = LNBITS_PORT;                             // server port number
 #include <TinyGsmClient.h>
 #include <ArduinoHttpClient.h>
 #include "Config.h"
-#include "display.h"
+#include "Display.h"
 
 #ifdef DUMP_AT_COMMANDS
   #include <StreamDebugger.h>
@@ -89,6 +93,8 @@ bool setPowerBoostKeepOn(int en){
   return I2CPower.endTransmission() == 0;
 }
 
+#define SATE_BACKGROUND -1
+
 Display display = Display(SCREEN_WIDTH, SCREEN_HEIGHT, CS_PIN, DC_PIN, MOSI_PIN, SCLK_PIN, RST_PIN);
 
 Config config = Config(PORTAL_PIN);
@@ -100,7 +106,9 @@ void setup() {
 
   // Display
   display.setup();
-  display.clear();
+
+  // Start Setup
+  display.clear(SATE_BACKGROUND);
 
   display.drawLine("Setup");
   delay(3000);
@@ -158,7 +166,7 @@ int count = 0;
 bool connectionClosed = false;
 
 void loop() {
-  display.clear();
+  display.clear(SATE_BACKGROUND);
   display.drawLine("Start");
 
   SerialMon.print("Connecting to APN: ");
@@ -206,6 +214,8 @@ void loop() {
     client.print("Connected");
     client.endMessage();
 
+    display.qrcode(lnurl);
+
     while (client.connected() && !connectionClosed) {
       int messageSize = client.parseMessage();
       int messageType = client.messageType();
@@ -219,9 +229,24 @@ void loop() {
 
       if (messageSize > 0) {
         
-        if (messageType == TYPE_TEXT) SerialMon.println("Received Text:");
-        SerialMon.println(client.readString());
+        if (messageType == TYPE_TEXT) {
+          SerialMon.println("Received Text:");
+          SerialMon.println(client.readString());
+
+          // TODO: Trigger Pin
+          display.clear();
+          display.payed();
+
+          // Refactore for looping and state
+          delay(5000);    
+          display.qrcode(lnurl);          
+        }
       }
+
+      // Update GSM Connection Bars
+      int16_t strength = modem.getSignalQuality();
+      SerialMon.print("Signal Strengh: ");
+      SerialMon.println(strength);
 
       // wait 2 seconds
       delay(250);    
