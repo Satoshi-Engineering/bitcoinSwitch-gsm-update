@@ -1,8 +1,6 @@
 /*
-  Source BAsed on 
-
-  https://github.com/arduino-libraries/ArduinoHttpClient/blob/master/examples/SimpleWebSocket/SimpleWebSocket.ino
-  
+  Source Based on 
+  - Rui Santos Work https://github.com/arduino-libraries/ArduinoHttpClient/blob/master/examples/SimpleWebSocket/SimpleWebSocket.ino
   Rui Santos Complete project details at https://RandomNerdTutorials.com/esp32-sim800l-publish-data-to-cloud/
 */
 
@@ -76,9 +74,6 @@ TwoWire I2CPower = TwoWire(0);
 TinyGsmClient gsmclient(modem);
 WebSocketClient client = WebSocketClient(gsmclient, server, port);
 
-#define uS_TO_S_FACTOR 1000000UL   /* Conversion factor for micro seconds to seconds */
-#define TIME_TO_SLEEP  1        /* Time ESP32 will go to sleep (in seconds) 3600 seconds = 1 hour */
-
 #define IP5306_ADDR          0x75
 #define IP5306_REG_SYS_CTL0  0x00
 
@@ -122,6 +117,7 @@ void setup() {
 
   // Bitcoin Switch - Pre set the possible pins
   pinMode(12, OUTPUT);
+  digitalWrite(12, LOW);
 
   // Start I2C communication
   I2CPower.begin(I2C_SDA, I2C_SCL, 400000);
@@ -160,32 +156,33 @@ void setup() {
   if (strlen(simPIN) && modem.getSimStatus() != 3 ) {
     modem.simUnlock(simPIN);
   }
-
-  // Configure the wake up source as timer wake up  
-  esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP * uS_TO_S_FACTOR);
 }
 
 int count = 0;
 bool connectionClosed = false;
 
+unsigned long startTime;
+
 void loop() {
+  SerialMon.println("-------------> LOOP <-------------");
+
   display.clear(SATE_BACKGROUND);
   display.drawLine("Start");
   display.updateSignalStrength(modem.getSignalQuality());
 
   SerialMon.print("Connecting to APN: ");
   SerialMon.print(apn);
-  display.drawLine("Connect to APN:");
+  display.drawLine("Connecting to APN:");
 
   if (!modem.gprsConnect(apn, gprsUser, gprsPass)) {
     SerialMon.println(" FAIL");
-    display.drawLine("FAIL");
-    delay(1000);
+    display.drawLine("FAIL", RED);
+    delay(2000);
     return;
   } 
 
   SerialMon.println(" OK");
-  display.drawLine(apn);
+  display.drawLine(apn, GREEN);
   display.updateSignalStrength(modem.getSignalQuality());
 
   // Wired code from Example
@@ -194,13 +191,12 @@ void loop() {
   }
   display.updateSignalStrength(modem.getSignalQuality());
 
-  //while (modem.isGprsConnected()) {
   while (modem.isGprsConnected()) {
     SerialMon.print("Connected to: ");
     SerialMon.println(modem.getOperator());
 
-    SerialMon.print("Starting WebSocket Connection: ");
-    display.drawLine("WebSocket:");
+    SerialMon.print("WebSocket Connection: ");
+    display.drawLine("WebSocket Connect:");
 
     int succ = client.begin(resource); // 0 if successful, else error
     SerialMon.println((succ == 0 ? "OK" : "ERROR"));
@@ -208,12 +204,14 @@ void loop() {
     if (succ != 0) {
       client.stop();
       SerialMon.println(("Retry in 1 sec"));
-      display.drawLine("FAIL");
+      display.drawLine("FAIL", RED);
       delay(1000);
       continue;
     }
+    
+    display.drawLine("OK", GREEN);
 
-    display.drawLine("OK");
+    // Sending Websocket Text connected
     SerialMon.println("Sending Connected");
     display.drawLine("Sending Connected");
     display.updateSignalStrength(modem.getSignalQuality());
@@ -221,23 +219,27 @@ void loop() {
     client.beginMessage(TYPE_TEXT);
     client.print("Connected");
     client.endMessage();
+    delay(1000);
 
     display.qrcode(lnurl);
     display.updateSignalStrength(modem.getSignalQuality());
 
+    startTime = millis();
+
     while (client.connected() && !connectionClosed) {
       int messageSize = client.parseMessage();
       int messageType = client.messageType();
-      bool isFinal = client.isFinal();
 
       if (messageType == TYPE_CONNECTION_CLOSE) {
-        SerialMon.println("Connection Closed");
+        SerialMon.println("WebSocket Closed");
+        display.warning("WebSoc");
+        delay(2000);
         connectionClosed = true;
         break;
       }
 
+      // Websocket Recieve
       if (messageSize > 0) {
-        
         if (messageType == TYPE_TEXT) {
           String payloadStr = client.readString();
           SerialMon.println("Received Text:");
@@ -248,7 +250,6 @@ void loop() {
           delay(getValue(payloadStr, '-', 1).toInt());
           digitalWrite(getValue(payloadStr, '-', 0).toInt(), LOW);
 
-          display.clear();
           display.payed();
 
           // Refactore for looping and state
@@ -260,21 +261,33 @@ void loop() {
       // Update GSM Connection Bars
       display.updateSignalStrength(modem.getSignalQuality());
 
-      // wait 2 seconds
+      // Check Internet Connection
+      if (!modem.isGprsConnected()) {
+        SerialMon.println("GPRS disconnected while on Websocket");
+        display.warning(" GPRS");
+        delay(2000);
+        break;
+      }
+
+      // wait
       delay(250);    
     }
 
     // Close client and disconnect
     client.stop();
+    SerialMon.print("Server disconnected after ");
+    SerialMon.println(millitsToReadable(millis() - startTime));
 
-    SerialMon.println(F("Server disconnected"));
+    // If GPRS Connection is still there draw Reconnect Screen
+    if (modem.isGprsConnected()) {
+      display.clear(SATE_BACKGROUND);
+      display.drawLine("Reconnect ...");
+      SerialMon.println("GPRS still connect, trying reconnect");
+    }
   }
 
-  //modem.gprsDisconnect();
-  SerialMon.println(F("GPRS disconnected"));
-
-  // Put ESP32 into deep sleep mode (with timer wake up)
-  esp_deep_sleep_start();
+  modem.gprsDisconnect();
+  SerialMon.println("GPRS disconnected");
 }
 
 //////////////////HELPERS///////////////////
@@ -290,4 +303,17 @@ String getValue(String data, char separator, int index) {
         }
     }
     return found > index ? data.substring(strIndex[0], strIndex[1]) : "";
+}
+
+String millitsToReadable(unsigned long currentMillis) {
+  unsigned long seconds = currentMillis / 1000;
+  unsigned long minutes = seconds / 60;
+  unsigned long hours = minutes / 60;
+  unsigned long days = hours / 24;
+
+  seconds %= 60;
+  minutes %= 60;
+  hours %= 24;  
+
+  return (days > 0 ? String(days) + " days " : "") + (hours < 10 ? "0" : "") + String(hours) + ":" + (minutes < 10 ? "0" : "") + String(minutes) + ":" + (seconds < 10 ? "0" : "") + String(seconds); 
 }

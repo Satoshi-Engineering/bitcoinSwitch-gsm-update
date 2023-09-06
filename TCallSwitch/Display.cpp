@@ -5,10 +5,11 @@
 #include <SPI.h>
 #include "QRCode_SSD1351.h"
 
-#include "SateLogo.h"
-#include "LightningBolt.h"
+#include "bitmaps/Logo.h"
+#include "bitmaps/LightningBolt.h"
+#include "bitmaps/Warning.h"
 
-
+#define LINE_HEIGHT 10
 
 Display::Display(uint16_t width_, uint16_t height_, int8_t cs_pin_, int8_t dc_pin_, int8_t mosi_pin_, int8_t sclk_pin_, int8_t rst_pin_)
   : tft(width_, height_, cs_pin_, dc_pin_, mosi_pin_, sclk_pin_, rst_pin_) {
@@ -29,7 +30,7 @@ void Display::setup() {
 void Display::clear(int background) {
   switch (background) {
     case -1:
-      tft.drawRGBBitmap(0, 0, SateLogo, 128, 128);
+      tft.drawRGBBitmap(0, 0, LogoBitmap, 128, 128);
       break;
 
     default:
@@ -37,18 +38,24 @@ void Display::clear(int background) {
       break;
   }
 
-  line = 2;
+  line = 0;
 }
 
 void Display::drawLine(String text, uint16_t color) {
-  tft.setCursor(5, line);
+  tft.setCursor(5, 2 + line * LINE_HEIGHT);
   tft.setTextColor(color);
   tft.print((char *)text.c_str());
 
-  line += 10;
+  line++;
+
+  // Display Height reached
+  if (line >= lineMax) {
+    clear(-1);
+  }
 }
 
 void Display::payed() {
+  tft.fillScreen(BLACK);
   tft.setTextSize(4);
   tft.setCursor(8, this->height * 0.5 + 30);
   tft.print("PAYED");
@@ -59,8 +66,17 @@ void Display::payed() {
     delay(250);
     tft.fillRect(46, 10, 36, 64, BLACK);
     delay(250);
-    tft.drawRGBBitmap(46, 10, LightningBolt, 36, 64);
+    tft.drawRGBBitmap(46, 10, LightningBoltBitmap, 36, 64);
   }
+}
+
+void Display::warning(String text) {
+  tft.fillScreen(BLACK);
+  tft.setTextSize(3);
+  tft.setCursor(8, this->height * 0.5 + 30);
+  tft.print((char *)text.c_str());
+  tft.setTextSize(1);
+  tft.drawRGBBitmap(32, 5, WarningBitmap, 64, 64);
 }
 
 void Display::updateSignalStrength(int16_t strength) {
