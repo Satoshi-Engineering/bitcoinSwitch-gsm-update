@@ -96,6 +96,8 @@ Config config = Config(PORTAL_PIN);
 Config::Data configData;
 
 void setup() {
+  SerialMon.println("-------------> SETUP <-------------");
+
   // Set serial monitor debugging window baud rate to 115200
   SerialMon.begin(115200);
 
@@ -158,136 +160,160 @@ void setup() {
   }
 }
 
-int count = 0;
-bool connectionClosed = false;
+bool allConnectionsAlive = false;
 
 unsigned long startTime;
 
+bool firstLoopDraw = true;
+
 void loop() {
   SerialMon.println("-------------> LOOP <-------------");
-
   display.clear(SATE_BACKGROUND);
-  display.drawLine("Start");
+
+  if (firstLoopDraw) {
+    firstLoopDraw = false;
+    display.drawLine("Start");
+  } else {
+    display.clear(SATE_BACKGROUND);
+    display.drawLine("Reconnect ...");
+    SerialMon.println("Reconnect ...");
+    display.drawLine("Last Run:");
+    display.drawLine(millitsToReadable(millis() - startTime), YELLOW);
+  }
+  startTime = millis();
   display.updateSignalStrength(modem.getSignalQuality());
 
-  SerialMon.print("Connecting to APN: ");
-  SerialMon.print(apn);
-  display.drawLine("Connecting to APN:");
-
-  if (!modem.gprsConnect(apn, gprsUser, gprsPass)) {
-    SerialMon.println(" FAIL");
-    display.drawLine("FAIL", RED);
-    delay(2000);
-    return;
-  } 
-
-  SerialMon.println(" OK");
-  display.drawLine(apn, GREEN);
-  display.updateSignalStrength(modem.getSignalQuality());
-
-  // Wired code from Example
+  // ----------- CHECK: GPRS
   if (modem.isGprsConnected()) { 
-    SerialMon.println("GPRS connected"); 
+      SerialMon.println("GPRS connected"); 
+      display.drawLine("GPRS connected");
+  } else {
+    SerialMon.print("GPRS connecting to ");
+    SerialMon.print(apn);
+    display.drawLine("GPRS connecting");
+
+    if (!modem.gprsConnect(apn, gprsUser, gprsPass)) {
+      SerialMon.println(" - FAIL");
+      display.drawLine("FAIL", RED);
+
+      SerialMon.println(("Retry in 2 sec"));
+      delay(2000);
+      return;
+    } 
+
+    SerialMon.println(" - OK");
+    display.drawLine(apn, GREEN);
   }
+
+  SerialMon.print("Operator: ");
+  SerialMon.println(modem.getOperator());
+
   display.updateSignalStrength(modem.getSignalQuality());
 
-  while (modem.isGprsConnected()) {
-    SerialMon.print("Connected to: ");
-    SerialMon.println(modem.getOperator());
+  // ----------- CHECK: Websocket
+  if (client.connected()) {
+    SerialMon.println("WebSocket connected");
+    display.drawLine("WebSocket connected");
+  } else {
+    SerialMon.print("WebSocket connecting: ");
+    display.drawLine("WebSocket connecting");
 
-    SerialMon.print("WebSocket Connection: ");
-    display.drawLine("WebSocket Connect:");
+    bool success = client.begin(resource) == 0; // 0 if successful, else error
 
-    int succ = client.begin(resource); // 0 if successful, else error
-    SerialMon.println((succ == 0 ? "OK" : "ERROR"));
-
-    if (succ != 0) {
+    if (!success) {
       client.stop();
-      SerialMon.println(("Retry in 1 sec"));
       display.drawLine("FAIL", RED);
-      delay(1000);
-      continue;
+      SerialMon.println("FAIL");
+
+      SerialMon.println("Retry in 2 sec");
+      delay(2000);
+      return;
     }
-    
+
+    SerialMon.println("OK");
     display.drawLine("OK", GREEN);
-
-    // Sending Websocket Text connected
-    SerialMon.println("Sending Connected");
-    display.drawLine("Sending Connected");
-    display.updateSignalStrength(modem.getSignalQuality());
-
-    client.beginMessage(TYPE_TEXT);
-    client.print("Connected");
-    client.endMessage();
-    delay(1000);
-
-    display.qrcode(lnurl);
-    display.updateSignalStrength(modem.getSignalQuality());
-
-    startTime = millis();
-
-    while (client.connected() && !connectionClosed) {
-      int messageSize = client.parseMessage();
-      int messageType = client.messageType();
-
-      if (messageType == TYPE_CONNECTION_CLOSE) {
-        SerialMon.println("WebSocket Closed");
-        display.warning("WebSoc");
-        delay(2000);
-        connectionClosed = true;
-        break;
-      }
-
-      // Websocket Recieve
-      if (messageSize > 0) {
-        if (messageType == TYPE_TEXT) {
-          String payloadStr = client.readString();
-          SerialMon.println("Received Text:");
-          SerialMon.println(payloadStr);
-
-          pinMode(getValue(payloadStr, '-', 0).toInt(), OUTPUT);
-          digitalWrite(getValue(payloadStr, '-', 0).toInt(), HIGH);
-          delay(getValue(payloadStr, '-', 1).toInt());
-          digitalWrite(getValue(payloadStr, '-', 0).toInt(), LOW);
-
-          display.payed();
-
-          // Refactore for looping and state
-          delay(5000);    
-          display.qrcode(lnurl);          
-        }
-      }
-
-      // Update GSM Connection Bars
-      display.updateSignalStrength(modem.getSignalQuality());
-
-      // Check Internet Connection
-      if (!modem.isGprsConnected()) {
-        SerialMon.println("GPRS disconnected while on Websocket");
-        display.warning(" GPRS");
-        delay(2000);
-        break;
-      }
-
-      // wait
-      delay(250);    
-    }
-
-    // Close client and disconnect
-    client.stop();
-    SerialMon.print("Server disconnected after ");
-    SerialMon.println(millitsToReadable(millis() - startTime));
-
-    // If GPRS Connection is still there draw Reconnect Screen
-    if (modem.isGprsConnected()) {
-      display.clear(SATE_BACKGROUND);
-      display.drawLine("Reconnect ...");
-      SerialMon.println("GPRS still connect, trying reconnect");
-    }
   }
 
-  modem.gprsDisconnect();
-  SerialMon.println("GPRS disconnected");
+  display.updateSignalStrength(modem.getSignalQuality());
+
+  // Sending Websocket Text connected
+  SerialMon.println("Sending Connected");
+  display.drawLine("Sending Connected");
+
+  client.beginMessage(TYPE_TEXT);
+  client.print("Connected");
+  client.endMessage();
+
+  display.qrcode(lnurl);
+  display.updateSignalStrength(modem.getSignalQuality());
+
+  startTime = millis();
+  allConnectionsAlive = true;
+
+  while (allConnectionsAlive) {
+    // Check Websocket
+    int messageSize = client.parseMessage();
+    int messageType = client.messageType();
+
+    if (messageType == TYPE_CONNECTION_CLOSE) {
+      allConnectionsAlive = false;
+
+      SerialMon.println("WebSocket Closed");
+      display.warning("WebSoc");
+      delay(2000);
+      break;
+    }
+
+    // Websocket Recieve
+    if (messageSize > 0) {
+      if (messageType == TYPE_TEXT) {
+        String payloadStr = client.readString();
+        SerialMon.println("Received Text:");
+        SerialMon.println(payloadStr);
+        display.payed(0);
+
+        pinMode(getValue(payloadStr, '-', 0).toInt(), OUTPUT);
+        digitalWrite(getValue(payloadStr, '-', 0).toInt(), HIGH);
+        delay(getValue(payloadStr, '-', 1).toInt());
+        digitalWrite(getValue(payloadStr, '-', 0).toInt(), LOW);
+
+        display.payed(1);
+
+        // Refactor: Application Runnning, Waiting
+        delay(5000);    
+        display.qrcode(lnurl);          
+      }
+    }
+
+    // Update GSM Connection Bars
+    display.updateSignalStrength(modem.getSignalQuality());
+
+    // Check Websocket Connection
+    if (!client.connected()) {
+      allConnectionsAlive = false;
+
+      SerialMon.println("HTTP Client disconnected");
+      display.warning(" HTTP");
+      delay(2000);
+      break;      
+    }
+
+    // Check Internet Connection
+    if (!modem.isGprsConnected()) {
+      allConnectionsAlive = false;
+
+      SerialMon.println("GPRS disconnected while on Websocket");
+      display.warning(" GPRS");
+      delay(2000);
+      break;
+    }
+
+    // wait
+    delay(250);    
+  }
+
+  SerialMon.print("Server disconnected after ");
+  SerialMon.println(millitsToReadable(millis() - startTime));
 }
 
 //////////////////HELPERS///////////////////

@@ -54,19 +54,23 @@ void Display::drawLine(String text, uint16_t color) {
   }
 }
 
-void Display::payed() {
-  tft.fillScreen(BLACK);
-  tft.setTextSize(4);
-  tft.setCursor(8, this->height * 0.5 + 30);
-  tft.print("PAYED");
-  tft.setTextSize(1);
+void Display::payed(int part) {
+  if (part == 0) {
+    tft.fillScreen(BLACK);
+    tft.setTextSize(4);
+    tft.setCursor(8, this->height * 0.5 + 30);
+    tft.print("PAYED");
+    tft.setTextSize(1);
+  }
 
-  // Flash  36x64px
-  for (int i = 0; i < 4; i++) {
-    delay(250);
-    tft.fillRect(46, 10, 36, 64, BLACK);
-    delay(250);
-    tft.drawRGBBitmap(46, 10, LightningBoltBitmap, 36, 64);
+  if (part == 1) {
+    // Flash  36x64px
+    for (int i = 0; i < 4; i++) {
+      delay(250);
+      tft.fillRect(46, 10, 36, 64, BLACK);
+      delay(250);
+      tft.drawRGBBitmap(46, 10, LightningBoltBitmap, 36, 64);
+    }
   }
 }
 

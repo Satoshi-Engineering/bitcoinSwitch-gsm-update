@@ -33,7 +33,7 @@ class Display {
     void clear(int background = 0);
     void drawLine(String text, uint16_t color = WHITE);
     void qrcode(String text);
-    void payed();
+    void payed(int part);
     void warning(String text);
     void updateSignalStrength(int16_t strength);
 
