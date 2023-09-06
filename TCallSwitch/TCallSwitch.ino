@@ -120,6 +120,9 @@ void setup() {
   //config.checkForConfigMode(2000);
   display.drawLine("Read Config");
 
+  // Bitcoin Switch - Pre set the possible pins
+  pinMode(12, OUTPUT);
+
   // Start I2C communication
   I2CPower.begin(I2C_SDA, I2C_SCL, 400000);
 
@@ -168,6 +171,7 @@ bool connectionClosed = false;
 void loop() {
   display.clear(SATE_BACKGROUND);
   display.drawLine("Start");
+  display.updateSignalStrength(modem.getSignalQuality());
 
   SerialMon.print("Connecting to APN: ");
   SerialMon.print(apn);
@@ -182,11 +186,13 @@ void loop() {
 
   SerialMon.println(" OK");
   display.drawLine(apn);
+  display.updateSignalStrength(modem.getSignalQuality());
 
   // Wired code from Example
   if (modem.isGprsConnected()) { 
     SerialMon.println("GPRS connected"); 
   }
+  display.updateSignalStrength(modem.getSignalQuality());
 
   //while (modem.isGprsConnected()) {
   while (modem.isGprsConnected()) {
@@ -198,6 +204,7 @@ void loop() {
 
     int succ = client.begin(resource); // 0 if successful, else error
     SerialMon.println((succ == 0 ? "OK" : "ERROR"));
+
     if (succ != 0) {
       client.stop();
       SerialMon.println(("Retry in 1 sec"));
@@ -209,12 +216,14 @@ void loop() {
     display.drawLine("OK");
     SerialMon.println("Sending Connected");
     display.drawLine("Sending Connected");
+    display.updateSignalStrength(modem.getSignalQuality());
 
     client.beginMessage(TYPE_TEXT);
     client.print("Connected");
     client.endMessage();
 
     display.qrcode(lnurl);
+    display.updateSignalStrength(modem.getSignalQuality());
 
     while (client.connected() && !connectionClosed) {
       int messageSize = client.parseMessage();
@@ -230,10 +239,15 @@ void loop() {
       if (messageSize > 0) {
         
         if (messageType == TYPE_TEXT) {
+          String payloadStr = client.readString();
           SerialMon.println("Received Text:");
-          SerialMon.println(client.readString());
+          SerialMon.println(payloadStr);
 
-          // TODO: Trigger Pin
+          pinMode(getValue(payloadStr, '-', 0).toInt(), OUTPUT);
+          digitalWrite(getValue(payloadStr, '-', 0).toInt(), HIGH);
+          delay(getValue(payloadStr, '-', 1).toInt());
+          digitalWrite(getValue(payloadStr, '-', 0).toInt(), LOW);
+
           display.clear();
           display.payed();
 
@@ -244,9 +258,7 @@ void loop() {
       }
 
       // Update GSM Connection Bars
-      int16_t strength = modem.getSignalQuality();
-      SerialMon.print("Signal Strengh: ");
-      SerialMon.println(strength);
+      display.updateSignalStrength(modem.getSignalQuality());
 
       // wait 2 seconds
       delay(250);    
@@ -263,4 +275,19 @@ void loop() {
 
   // Put ESP32 into deep sleep mode (with timer wake up)
   esp_deep_sleep_start();
+}
+
+//////////////////HELPERS///////////////////
+String getValue(String data, char separator, int index) {
+    int found = 0;
+    int strIndex[] = { 0, -1 };
+    int maxIndex = data.length() - 1;
+    for (int i = 0; i <= maxIndex && found <= index; i++) {
+        if (data.charAt(i) == separator || i == maxIndex) {
+            found++;
+            strIndex[0] = strIndex[1] + 1;
+            strIndex[1] = (i == maxIndex) ? i+1 : i;
+        }
+    }
+    return found > index ? data.substring(strIndex[0], strIndex[1]) : "";
 }
