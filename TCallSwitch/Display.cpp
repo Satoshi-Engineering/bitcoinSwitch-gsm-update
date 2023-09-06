@@ -58,8 +58,8 @@ void Display::payed(int part) {
   if (part == 0) {
     tft.fillScreen(BLACK);
     tft.setTextSize(4);
-    tft.setCursor(8, this->height * 0.5 + 30);
-    tft.print("PAYED");
+    tft.setCursor(15, this->height * 0.5 + 30);
+    tft.print("PAID");
     tft.setTextSize(1);
     tft.drawRGBBitmap(46, 10, LightningBoltBitmap, 36, 64);
   }
