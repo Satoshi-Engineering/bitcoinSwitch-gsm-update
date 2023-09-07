@@ -14,7 +14,7 @@ class Config {
     };
 
     struct Data {
-      String password;
+      String devicePassword;
       String ssid;
       String wifiPassword;
       String serverFull;

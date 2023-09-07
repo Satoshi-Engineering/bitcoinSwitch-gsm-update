@@ -96,10 +96,9 @@ Config config = Config(PORTAL_PIN);
 Config::Data configData;
 
 void setup() {
-  SerialMon.println("-------------> SETUP <-------------");
-
   // Set serial monitor debugging window baud rate to 115200
   SerialMon.begin(115200);
+  SerialMon.println("-------------> SETUP <-------------");
 
   // Display
   display.setup();

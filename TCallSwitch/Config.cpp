@@ -1,10 +1,5 @@
 #include "Config.h"
 
-#include <FS.h>
-#include <LittleFS.h>
-
-#include <ArduinoJson.h>
-
 /* What happend to SPIFFS?
   SPIFFS is currently deprecated and may be removed in future releases of the core. Please consider moving your code to LittleFS.
   SPIFFS is not actively supported anymore by the upstream developer, while LittleFS is under active development,
@@ -12,16 +7,22 @@
   https://arduino-esp8266.readthedocs.io/en/latest/filesystem.html
 */
 
+#include <ArduinoJson.h>
+
+#include "FS.h"
+#include <LittleFS.h>
+
+#define FORMAT_LITTLEFS_IF_FAILED true
+
 fs::LittleFSFS &FlashFS = LittleFS;
 
-#define FORMAT_ON_FAIL true
 #define PARAM_FILE "/elements.json"
 
 Config::Config(int _portalPin) : portalPin(_portalPin) {
 }
 
 void Config::init() {
-  if (!FlashFS.begin(true, "/littlefs", 5, "part2")) {
+  if(!FlashFS.begin(FORMAT_LITTLEFS_IF_FAILED)){
     Serial.println("An Error has occurred while mounting LittleFS");
   }
 }
@@ -53,7 +54,6 @@ void Config::checkForConfigMode(int m_sec) {
 }
 
 void Config::configOverSerialPort() {
-
   while (true) {
     if (Serial.available() == 0) continue;
     String data = Serial.readStringUntil('\n');
@@ -142,8 +142,8 @@ Config::Data Config::getData() {
     DeserializationError error = deserializeJson(doc, paramFile.readString());
 
     const JsonObject maRoot0 = doc[0];
-    data.password = (const char *)maRoot0["value"];
-    Serial.println(data.password);
+    data.devicePassword = (const char *)maRoot0["value"];
+    Serial.println(data.devicePassword);
 
     const JsonObject maRoot1 = doc[1];
     data.ssid = (const char *)maRoot1["value"];
