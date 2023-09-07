@@ -19,6 +19,7 @@ class Config {
       String wifiPassword;
       String serverFull;
       String lnbitsServer;
+      int serverPort;
       String deviceId;
       String lnurl;
     };
@@ -26,13 +27,15 @@ class Config {
     Config(int _portalPin);
 
     void init();
-    void checkForConfigMode(int m_sec);
+    bool checkForConfigMode(int m_sec);
 
     Data getData();
     void configOverSerialPort();
     void executeCommand(String commandName, String commandData);
-    void removeFile(String path);
-    void appendToFile(String path, String data);
+
+    void deleteFile(String path);
+    void appendOrCreateFile(String path, String data);
+
     void readFile(String path);
 
     KeyValue extractKeyValue(String s);

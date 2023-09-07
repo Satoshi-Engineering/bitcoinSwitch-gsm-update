@@ -5,7 +5,7 @@
 */
 
 // Bitcoin Swtich
-#define PORTAL_PIN 4
+#define PORTAL_PIN 2
 
 #include "secrets.h"
 
@@ -17,7 +17,7 @@ const char simPIN[]   = GSM_PIN;  // SIM card PIN (leave empty, if not defined)
 
 // Server details
 const char server[] = LNBITS_SERVER;  // server address
-const char resource[] = LNBITS_PATH;
+const char resource[] = LNBITS_DEVICEID;
 
 const int  port = LNBITS_PORT; // server port number
 const char lnurl[] = LNBITS_LNURL;
@@ -98,6 +98,7 @@ Config::Data configData;
 void setup() {
   // Set serial monitor debugging window baud rate to 115200
   SerialMon.begin(115200);
+  delay(250);
   SerialMon.println("-------------> SETUP <-------------");
 
   // Display
@@ -105,16 +106,42 @@ void setup() {
 
   // Start Setup
   display.clear(SATE_BACKGROUND);
-
   display.drawLine("Setup");
   delay(3000);
 
   // read config
+  display.drawLine("Read Config");
+  SerialMon.print("Read Config");
+
   config.init();
   configData = config.getData();
+
+  bool foundConfig = configData.serverFull.length() < 10;
+
+  // Check if config exists
+  if (foundConfig) {
+    SerialMon.println(" - Empty");
+    display.drawLine("Empty", RED);
+
+    Serial.println("USB Config triggered");
+    display.drawLine("Config Mode");
+    display.drawLine("YES", GREEN);
+    
+    config.configOverSerialPort();    
+  } else {
+    SerialMon.println(" - Found");
+    display.drawLine("Found", GREEN);
+  }
+
+  // Check if config mode is triggered
   display.drawLine("Config Mode?");
-  //config.checkForConfigMode(2000);
-  display.drawLine("Read Config");
+  bool triggerConfig = config.checkForConfigMode(2000);
+  if (triggerConfig) {
+    Serial.println("USB Config triggered");
+    display.drawLine("YES", GREEN);
+    config.configOverSerialPort();
+  }
+  display.drawLine("NO", YELLOW);
 
   // Bitcoin Switch - Pre set the possible pins
   pinMode(12, OUTPUT);
@@ -217,7 +244,7 @@ void loop() {
     SerialMon.print("WebSocket connecting: ");
     display.drawLine("WebSocket connecting");
 
-    bool success = client.begin(resource) == 0; // 0 if successful, else error
+    bool success = client.begin("/api/v1/ws/" + String(resource)) == 0; // 0 if successful, else error
 
     if (!success) {
       client.stop();

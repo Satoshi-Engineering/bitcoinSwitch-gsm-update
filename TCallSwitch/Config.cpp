@@ -27,7 +27,7 @@ void Config::init() {
   }
 }
 
-void Config::checkForConfigMode(int m_sec) {
+bool Config::checkForConfigMode(int m_sec) {
   int timer = 0;
   bool triggerConfig = false;
 
@@ -46,11 +46,7 @@ void Config::checkForConfigMode(int m_sec) {
     timer = timer + 250;
     delay(250);
   }
-
-  if (triggerConfig) {
-    Serial.println("USB Config triggered");
-    configOverSerialPort();
-  }
+  return triggerConfig;
 }
 
 void Config::configOverSerialPort() {
@@ -75,15 +71,15 @@ void Config::executeCommand(String commandName, String commandData) {
   String data = kv.value;
 
   if (commandName == "/file-remove") {
-    return removeFile(path);
+    return deleteFile("/" + path);
   }
   if (commandName == "/file-append") {
-    return appendToFile(path, data);
+    return appendOrCreateFile("/" + path, data);
   }
 
   if (commandName == "/file-read") {
     Serial.println("prepare to read");
-    readFile(path);
+    readFile("/" + path);
     Serial.println("readFile done");
     return;
   }
@@ -91,36 +87,51 @@ void Config::executeCommand(String commandName, String commandData) {
   Serial.println("command unknown");
 }
 
-void Config::removeFile(String path) {
-  Serial.println("removeFile: " + path);
-  FlashFS.remove("/" + path);
+void Config::deleteFile(String path) {
+  Serial.printf("Deleting file: %s\r\n", path);
+    if (FlashFS.remove(path)){
+        Serial.println("- file deleted");
+    } else {
+        Serial.println("- delete failed");
+    }
 }
 
-void Config::appendToFile(String path, String data) {
-  Serial.println("appendToFile: " + path);
-  File file = FlashFS.open("/" + path, FILE_APPEND);
+void Config::appendOrCreateFile(String path, String data) {
+  Serial.printf("Appending to file: %s\r\n", path);
+
+  File file = FlashFS.open(path, FILE_APPEND);
   if (!file) {
-    file = FlashFS.open("/" + path, FILE_WRITE);
+    file = FlashFS.open(path, FILE_WRITE);
+    Serial.printf("- failed to open file for appending - File created");
   }
-  if (file) {
-    file.println(data);
-    file.close();
+  if (file.print(data)) {
+      Serial.println("- data appended");
+  } else {
+      Serial.println("- append failed");
   }
+  file.close();
 }
 
 void Config::readFile(String path) {
+  //Serial.printf("Reading file: %s\r\n", path);
   Serial.println("readFile: " + path);
-  File file = FlashFS.open("/" + path);
-  if (file) {
-    while (file.available()) {
-      String line = file.readStringUntil('\n');
-      Serial.println("/file-read " + line);
-    }
-    file.close();
+
+  File file = FlashFS.open(path);
+  if (!file || file.isDirectory()){
+      // Serial.println("- failed to open file for reading");
+      Serial.println("");
+      Serial.println("/file-done");  
+      return;
   }
+
+  while (file.available()) {
+    String line = file.readStringUntil('\n');
+    Serial.println("/file-read " + line);
+  }
+  file.close();
   Serial.println("");
-  Serial.println("/file-done");
-}
+  Serial.println("/file-done");  
+}  
 
 Config::KeyValue Config::extractKeyValue(String s) {
   int spacePos = s.indexOf(" ");
@@ -142,24 +153,33 @@ Config::Data Config::getData() {
     DeserializationError error = deserializeJson(doc, paramFile.readString());
 
     const JsonObject maRoot0 = doc[0];
-    data.devicePassword = (const char *)maRoot0["value"];
+    data.devicePassword = String((const char *)maRoot0["value"]);
     Serial.println(data.devicePassword);
 
     const JsonObject maRoot1 = doc[1];
-    data.ssid = (const char *)maRoot1["value"];
+    data.ssid = String((const char *)maRoot1["value"]);
     Serial.println(data.ssid);
 
     const JsonObject maRoot2 = doc[2];
-    data.wifiPassword = (const char *)maRoot2["value"];
+    data.wifiPassword = String((const char *)maRoot2["value"]);
     Serial.println(data.wifiPassword);
 
     const JsonObject maRoot3 = doc[3];
-    data.serverFull = (const char *)maRoot3["value"];
+    data.serverFull = String((const char *)maRoot3["value"]);
     data.lnbitsServer = data.serverFull.substring(5, data.serverFull.length() - 33);
     data.deviceId = data.serverFull.substring(data.serverFull.length() - 22);
 
+    int indexOfColon = data.lnbitsServer.indexOf(":");
+    data.serverPort = (indexOfColon <= 0 ? 443 : data.lnbitsServer.substring(indexOfColon + 1).toInt());
+
+    Serial.println("Server Full: " + data.serverFull);
+    Serial.println("Server: " + data.lnbitsServer);
+    Serial.print("Port: ");
+    Serial.println(data.serverPort);
+    Serial.println("DeviceId (or Resource): " + data.deviceId);
+
     const JsonObject maRoot4 = doc[4];
-    data.lnurl = (const char *)maRoot4["value"];
+    data.lnurl = String((const char *)maRoot4["value"]);
     Serial.println(data.lnurl);
   } else {
     Serial.println("No Configfile");

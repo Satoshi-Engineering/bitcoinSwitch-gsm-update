@@ -7,6 +7,8 @@ Adoption of the Bitcoin Switch with the T-Call Go V1.4 which has a GSM800 Module
 
 This repo is based on the original source of [bitcoinSwitch](https://github.com/lnbits/bitcoinswitch) of @benarc!
 
+This [Commit](https://github.com/lnbits/bitcoinswitch/commit/9daee009820ccbdf6b7899ee88477fb181fcf457) was used for developing.
+
 ### Hardware
 
 - https://www.lilygo.cc/products/t-call-v1-4?variant=42285821460661
@@ -32,6 +34,14 @@ GND  GND
 FYI: GPI: GPIO34-39 can only be set as input mode and do not have software-enabled pullup or pulldown functions.
 
 ### Dev Notes
+
+#### Portal Pin change to 2
+
+Pin 4 is used by the modem. Changed Portal PIN to 2.
+
+```
+#define PORTAL_PIN 2
+```
 
 #### Signal Strength
 
