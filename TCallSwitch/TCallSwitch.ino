@@ -59,6 +59,8 @@ TwoWire I2CPower = TwoWire(0);
 TinyGsmClient gsmclient(modem);
 WebSocketClient wsClient(gsmclient, "", 80);
 
+#define WEBSOCKET_LOOP_DELAY 250
+
 #define IP5306_ADDR          0x75
 #define IP5306_REG_SYS_CTL0  0x00
 
@@ -263,6 +265,9 @@ void loop() {
   startTime = millis();
   allConnectionsAlive = true;
 
+  unsigned long lnurlPauseStart = 0;
+  bool lnurlPauseActive = false;
+
   while (allConnectionsAlive) {
     // Check Websocket
     int messageSize = wsClient.parseMessage();
@@ -283,19 +288,33 @@ void loop() {
         String payloadStr = wsClient.readString();
         SerialMon.println("Received Text:");
         SerialMon.println(payloadStr);
-        display.payed(0);
 
-        pinMode(getValue(payloadStr, '-', 0).toInt(), OUTPUT);
-        digitalWrite(getValue(payloadStr, '-', 0).toInt(), HIGH);
-        delay(getValue(payloadStr, '-', 1).toInt());
-        digitalWrite(getValue(payloadStr, '-', 0).toInt(), LOW);
+        if (!lnurlPauseActive) {
+          display.payed(0);
+  
+          pinMode(getValue(payloadStr, '-', 0).toInt(), OUTPUT);
+          digitalWrite(getValue(payloadStr, '-', 0).toInt(), HIGH);
+          delay(getValue(payloadStr, '-', 1).toInt());
+          digitalWrite(getValue(payloadStr, '-', 0).toInt(), LOW);
 
-        display.payed(1);
+          display.payed(1);
 
-        // Refactor: Application Runnning, Waiting
-        delay(5000);    
-        display.qrcode(configData.lnurl);          
+          display.hardwareWaitingScreen();
+
+          lnurlPauseStart = millis();
+          lnurlPauseActive = true;
+
+        } else {
+          display.drawLine("Recieved Payment, but", RED);
+          display.drawLine("Hardware not ready!", RED);
+        }
       }
+    }
+
+    // Application Wainting Time
+    if (lnurlPauseActive && (millis() - lnurlPauseStart > configData.lnurlWaitingTime)) {
+      lnurlPauseActive = false;
+      display.qrcode(configData.lnurl);          
     }
 
     // Update GSM Connection Bars
@@ -322,7 +341,7 @@ void loop() {
     }
 
     // wait
-    delay(250);    
+    delay(WEBSOCKET_LOOP_DELAY);    
   }
 
   SerialMon.print("Server disconnected after ");

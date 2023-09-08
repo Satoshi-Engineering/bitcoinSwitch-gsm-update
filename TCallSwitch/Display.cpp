@@ -75,6 +75,14 @@ void Display::payed(int part) {
   }
 }
 
+void Display::hardwareWaitingScreen() {
+  clear(-1);
+  drawLine("");
+  drawLine("Satoshi Engineering");
+  drawLine("We make IT easy");
+  drawLine("");
+}
+
 void Display::warning(String text) {
   tft.fillScreen(BLACK);
   tft.setTextSize(3);

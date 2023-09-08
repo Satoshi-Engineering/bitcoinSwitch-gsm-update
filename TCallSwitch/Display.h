@@ -34,6 +34,8 @@ class Display {
     void drawLine(String text, uint16_t color = WHITE);
     void qrcode(String text);
     void payed(int part);
+    void hardwareWaitingScreen();
+
     void warning(String text);
     void updateSignalStrength(int16_t strength);
 
