@@ -305,8 +305,8 @@ void loop() {
           lnurlPauseActive = true;
 
         } else {
-          display.drawLine("Recieved Payment, but", RED);
-          display.drawLine("Hardware not ready!", RED);
+          display.drawLine("Recieved Payment", RED);
+          display.drawLine("Hardware not ready", RED);
         }
       }
     }
