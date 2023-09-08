@@ -1,0 +1,102 @@
+[
+  {
+    "name": "password",
+    "type": "ACInput",
+    "value": "ToTheMoon1",
+    "label": "Password for PoS AP WiFi",
+    "pattern": "",
+    "placeholder": "",
+    "style": "",
+    "apply": "text"
+  },
+  {
+    "name": "ssid",
+    "type": "ACInput",
+    "value": "",
+    "label": "WiFi SSID",
+    "pattern": "",
+    "placeholder": "",
+    "style": "",
+    "apply": "text"
+  },
+  {
+    "name": "wifipassword",
+    "type": "ACInput",
+    "value": "",
+    "label": "WiFi Password",
+    "pattern": "",
+    "placeholder": "",
+    "style": "",
+    "apply": "text"
+  },
+  {
+    "name": "socket",
+    "type": "ACInput",
+    "value": "",
+    "label": "Copy link from LNURLDevices extension in LNbits",
+    "pattern": "",
+    "placeholder": "",
+    "style": "",
+    "apply": "text"
+  },
+  {
+    "name": "lnurl",
+    "type": "ACInput",
+    "value": "true",
+    "label": "LNURL",
+    "pattern": "",
+    "placeholder": "",
+    "style": "",
+    "apply": "text"
+  },
+  {
+    "name": "lnurlWaitingTime",
+    "type": "ACInput",
+    "value": "5000",
+    "label": "Waiting Time after payment in ms",
+    "pattern": "",
+    "placeholder": "",
+    "style": "",
+    "apply": "text"
+  },   
+  {
+    "name": "gsmPIN",
+    "type": "ACInput",
+    "value": "",
+    "label": "GSM PIN Code",
+    "pattern": "",
+    "placeholder": "",
+    "style": "",
+    "apply": "text"
+  },
+  {
+    "name": "gsmAPN",
+    "type": "ACInput",
+    "value": "",
+    "label": "GSM APN",
+    "pattern": "",
+    "placeholder": "",
+    "style": "",
+    "apply": "text"
+  },
+  {
+    "name": "gsmGPRSUser",
+    "type": "ACInput",
+    "value": "",
+    "label": "GSM GPRS User",
+    "pattern": "",
+    "placeholder": "",
+    "style": "",
+    "apply": "text"
+  },
+  {
+    "name": "gsmGPRSPassword",
+    "type": "ACInput",
+    "value": "",
+    "label": "GSM GPRS Password",
+    "pattern": "",
+    "placeholder": "",
+    "style": "",
+    "apply": "text"
+  }   
+]

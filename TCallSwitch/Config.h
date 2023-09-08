@@ -22,6 +22,12 @@ class Config {
       int serverPort;
       String deviceId;
       String lnurl;
+      int lnurlWaitingTime;
+
+      String gsmPIN;
+      String gsmAPN;
+      String gsmGPRSUser;
+      String gsmGPRSPass;
     };
 
     Config(int _portalPin);

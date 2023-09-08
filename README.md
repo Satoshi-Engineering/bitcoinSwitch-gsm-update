@@ -33,6 +33,10 @@ GND  GND
 
 FYI: GPI: GPIO34-39 can only be set as input mode and do not have software-enabled pullup or pulldown functions.
 
+### Configuration
+
+I needed to extend the current bitcoinSwitch config for the LNURL on the display and the gsm network. See [elements.json.example](elements.json.example).
+
 ### Dev Notes
 
 #### Portal Pin change to 2

@@ -7,21 +7,6 @@
 // Bitcoin Swtich
 #define PORTAL_PIN 2
 
-#include "secrets.h"
-
-// Your GPRS credentials (leave empty, if not needed)
-const char apn[]      = GSM_APN; // APN (example: internet.vodafone.pt) use https://wiki.apnchanger.org
-const char gprsUser[] = GSM_GPRS_USER; // GPRS User
-const char gprsPass[] = GSM_GPRS_PASS; // GPRS Password
-const char simPIN[]   = GSM_PIN;  // SIM card PIN (leave empty, if not defined)
-
-// Server details
-const char server[] = LNBITS_SERVER;  // server address
-const char resource[] = LNBITS_DEVICEID;
-
-const int  port = LNBITS_PORT; // server port number
-const char lnurl[] = LNBITS_LNURL;
-
 // TTGO T-Call pins
 #define MODEM_RST            5
 #define MODEM_PWKEY          4
@@ -72,7 +57,7 @@ TwoWire I2CPower = TwoWire(0);
 
 // TinyGSM Client for Internet connection
 TinyGsmClient gsmclient(modem);
-WebSocketClient client = WebSocketClient(gsmclient, server, port);
+WebSocketClient wsClient(gsmclient, "", 80);
 
 #define IP5306_ADDR          0x75
 #define IP5306_REG_SYS_CTL0  0x00
@@ -92,7 +77,7 @@ bool setPowerBoostKeepOn(int en){
 
 Display display = Display(SCREEN_WIDTH, SCREEN_HEIGHT, CS_PIN, DC_PIN, MOSI_PIN, SCLK_PIN, RST_PIN);
 
-Config config = Config(PORTAL_PIN);
+Config config(PORTAL_PIN);
 Config::Data configData;
 
 void setup() {
@@ -111,15 +96,15 @@ void setup() {
 
   // read config
   display.drawLine("Read Config");
-  SerialMon.print("Read Config");
+  SerialMon.println("Read Config");
 
   config.init();
   configData = config.getData();
 
-  bool foundConfig = configData.serverFull.length() < 10;
+  bool foundConfig = configData.serverFull.length() > 10;
 
   // Check if config exists
-  if (foundConfig) {
+  if (!foundConfig) {
     SerialMon.println(" - Empty");
     display.drawLine("Empty", RED);
 
@@ -129,9 +114,11 @@ void setup() {
     
     config.configOverSerialPort();    
   } else {
-    SerialMon.println(" - Found");
     display.drawLine("Found", GREEN);
   }
+
+  // Config Websocket
+  wsClient = WebSocketClient(gsmclient, configData.lnbitsServer.c_str(), configData.serverPort);
 
   // Check if config mode is triggered
   display.drawLine("Config Mode?");
@@ -181,8 +168,8 @@ void setup() {
   display.drawLine(modemInfo);
 
   // Unlock your SIM card with a PIN if needed
-  if (strlen(simPIN) && modem.getSimStatus() != 3 ) {
-    modem.simUnlock(simPIN);
+  if (configData.gsmPIN.length() > 0 && modem.getSimStatus() != 3 ) {
+    modem.simUnlock(configData.gsmPIN.c_str());
   }
 }
 
@@ -215,10 +202,10 @@ void loop() {
       display.drawLine("GPRS connected");
   } else {
     SerialMon.print("GPRS connecting to ");
-    SerialMon.print(apn);
-    display.drawLine("GPRS connecting");
+    SerialMon.print(configData.gsmAPN);
+    display.drawLine("GPRS connecting to");
 
-    if (!modem.gprsConnect(apn, gprsUser, gprsPass)) {
+    if (!modem.gprsConnect(configData.gsmAPN.c_str(), configData.gsmGPRSUser.c_str(), configData.gsmGPRSPass.c_str())) {
       SerialMon.println(" - FAIL");
       display.drawLine("FAIL", RED);
 
@@ -228,7 +215,7 @@ void loop() {
     } 
 
     SerialMon.println(" - OK");
-    display.drawLine(apn, GREEN);
+    display.drawLine(configData.gsmAPN, GREEN);
   }
 
   SerialMon.print("Operator: ");
@@ -237,21 +224,21 @@ void loop() {
   display.updateSignalStrength(modem.getSignalQuality());
 
   // ----------- CHECK: Websocket
-  if (client.connected()) {
+  if (wsClient.connected()) {
     SerialMon.println("WebSocket connected");
     display.drawLine("WebSocket connected");
   } else {
     SerialMon.print("WebSocket connecting: ");
     display.drawLine("WebSocket connecting");
 
-    bool success = client.begin("/api/v1/ws/" + String(resource)) == 0; // 0 if successful, else error
-
+    bool success = wsClient.begin("/api/v1/ws/" + configData.deviceId) == 0; // 0 if successful, else error
+    
     if (!success) {
-      client.stop();
       display.drawLine("FAIL", RED);
       SerialMon.println("FAIL");
 
       SerialMon.println("Retry in 2 sec");
+      wsClient.stop();
       delay(2000);
       return;
     }
@@ -266,11 +253,11 @@ void loop() {
   SerialMon.println("Sending Connected");
   display.drawLine("Sending Connected");
 
-  client.beginMessage(TYPE_TEXT);
-  client.print("Connected");
-  client.endMessage();
+  wsClient.beginMessage(TYPE_TEXT);
+  wsClient.print("Connected");
+  wsClient.endMessage();
 
-  display.qrcode(lnurl);
+  display.qrcode(configData.lnurl);
   display.updateSignalStrength(modem.getSignalQuality());
 
   startTime = millis();
@@ -278,8 +265,8 @@ void loop() {
 
   while (allConnectionsAlive) {
     // Check Websocket
-    int messageSize = client.parseMessage();
-    int messageType = client.messageType();
+    int messageSize = wsClient.parseMessage();
+    int messageType = wsClient.messageType();
 
     if (messageType == TYPE_CONNECTION_CLOSE) {
       allConnectionsAlive = false;
@@ -293,7 +280,7 @@ void loop() {
     // Websocket Recieve
     if (messageSize > 0) {
       if (messageType == TYPE_TEXT) {
-        String payloadStr = client.readString();
+        String payloadStr = wsClient.readString();
         SerialMon.println("Received Text:");
         SerialMon.println(payloadStr);
         display.payed(0);
@@ -307,7 +294,7 @@ void loop() {
 
         // Refactor: Application Runnning, Waiting
         delay(5000);    
-        display.qrcode(lnurl);          
+        display.qrcode(configData.lnurl);          
       }
     }
 
@@ -315,7 +302,7 @@ void loop() {
     display.updateSignalStrength(modem.getSignalQuality());
 
     // Check Websocket Connection
-    if (!client.connected()) {
+    if (!wsClient.connected()) {
       allConnectionsAlive = false;
 
       SerialMon.println("HTTP Client disconnected");

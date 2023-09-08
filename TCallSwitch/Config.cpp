@@ -148,39 +148,79 @@ Config::Data Config::getData() {
 
   File paramFile = FlashFS.open(PARAM_FILE, "r");
   if (paramFile) {
-    Serial.println("Found Configfile, reading config ...");
-    StaticJsonDocument<1500> doc;
+    StaticJsonDocument<2500> doc;
     DeserializationError error = deserializeJson(doc, paramFile.readString());
+    
+    if (error) {
+      Serial.print("deserializeJson() failed: ");
+      Serial.println(error.c_str());
+      return data;
+    }
 
-    const JsonObject maRoot0 = doc[0];
-    data.devicePassword = String((const char *)maRoot0["value"]);
-    Serial.println(data.devicePassword);
+    if (!doc.is<JsonArray>()) {
+      Serial.print("JSON reading ERROR. Root element is not a array!");
+      return data;
+    }
 
-    const JsonObject maRoot1 = doc[1];
-    data.ssid = String((const char *)maRoot1["value"]);
-    Serial.println(data.ssid);
+    JsonArray configArray = doc.as<JsonArray>();
 
-    const JsonObject maRoot2 = doc[2];
-    data.wifiPassword = String((const char *)maRoot2["value"]);
-    Serial.println(data.wifiPassword);
+    for (unsigned short i = 0; i < configArray.size(); ++i) {
+      const JsonObject configObject = configArray[i];
+      String name = String((const char *)configObject["name"]);
+      String value = String((const char *)configObject["value"]);
 
-    const JsonObject maRoot3 = doc[3];
-    data.serverFull = String((const char *)maRoot3["value"]);
-    data.lnbitsServer = data.serverFull.substring(5, data.serverFull.length() - 33);
-    data.deviceId = data.serverFull.substring(data.serverFull.length() - 22);
+      // Debug only
+      // Serial.print(name + " | ");
+      // Serial.println(value);
 
-    int indexOfColon = data.lnbitsServer.indexOf(":");
-    data.serverPort = (indexOfColon <= 0 ? 443 : data.lnbitsServer.substring(indexOfColon + 1).toInt());
+      // Password
+      if (name == "password") data.devicePassword = value;
+      
+      // Wifi
+      if (name == "ssid") data.ssid = value;
+      if (name == "wifipassword") data.wifiPassword = value;
+
+      // LNBits
+      if (name == "socket") {
+        data.serverFull = value;
+        data.lnbitsServer = data.serverFull.substring(5, data.serverFull.length() - 33);
+        data.deviceId = data.serverFull.substring(data.serverFull.length() - 22); 
+        data.serverPort = 443; // Default to wss
+        int indexOfColon = data.lnbitsServer.indexOf(":");
+        if (indexOfColon >= 0) {
+          data.serverPort = data.lnbitsServer.substring(indexOfColon + 1).toInt();
+          data.lnbitsServer = data.lnbitsServer.substring(0, indexOfColon);
+        }
+      }
+      if (name == "lnurl") data.lnurl = value;
+      if (name == "lnurlWaitingTime") data.lnurlWaitingTime = value.toInt();
+ 
+      // GSM
+      if (name == "gsmPIN") data.gsmPIN = value;
+      if (name == "gsmAPN") data.gsmAPN = value;
+      if (name == "gsmGPRSUser") data.gsmGPRSUser = value;
+      if (name == "gsmGPRSPassword") data.gsmGPRSPass = value;
+    }
+
+    Serial.println("Device Password: " + data.devicePassword);
+    Serial.println("SSID: " + data.ssid);
+    Serial.println("Wifi Password: " + data.wifiPassword);
 
     Serial.println("Server Full: " + data.serverFull);
     Serial.println("Server: " + data.lnbitsServer);
     Serial.print("Port: ");
     Serial.println(data.serverPort);
     Serial.println("DeviceId (or Resource): " + data.deviceId);
+    Serial.println("LNURL: " + data.lnurl);
+    Serial.print("Waitning time: ");
+    Serial.print(data.lnurlWaitingTime);
+    Serial.println("ms");
 
-    const JsonObject maRoot4 = doc[4];
-    data.lnurl = String((const char *)maRoot4["value"]);
-    Serial.println(data.lnurl);
+    Serial.println("GSM PIN: " + data.gsmPIN);
+    Serial.println("GSM APN: " + data.gsmAPN);
+    Serial.println("GSM GPRS User: " + data.gsmGPRSUser);
+    Serial.println("GSM GPRS Password: " + data.gsmGPRSPass);
+
   } else {
     Serial.println("No Configfile");
   }
