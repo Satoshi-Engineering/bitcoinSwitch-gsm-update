@@ -13,8 +13,11 @@ This [Commit](https://github.com/lnbits/bitcoinswitch/commit/9daee009820ccbdf6b7
 
 - https://www.lilygo.cc/products/t-call-v1-4?variant=42285821460661
   - Schematics: https://github.com/Xinyuan-LilyGO/LilyGo-T-Call-SIM800/blob/master/doc/SIM800L_IP5306.MD 
-- https://www.waveshare.com/1.5inch-RGB-OLED-Module.htm
+- https://www.waveshare.com/wiki/2.4inch_LCD_Module#Introduction
 - Relay
+
+You will find the sources for  https://www.waveshare.com/1.5inch-RGB-OLED-Module.htm
+too.
 
 ### Wireing
 ```
