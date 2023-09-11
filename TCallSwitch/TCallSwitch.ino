@@ -17,11 +17,13 @@
 #define I2C_SCL              22
 
 // Display
-#define SCREEN_WIDTH  128
-#define SCREEN_HEIGHT 128
+//#define SCREEN_WIDTH  128
+//#define SCREEN_HEIGHT 128
+#define SCREEN_WIDTH 240  ///< ILI9341 max TFT width
+#define SCREEN_HEIGHT 320 ///< ILI9341 max TFT height
 
-#define SCLK_PIN 18
 #define MOSI_PIN 14
+#define SCLK_PIN 18
 #define DC_PIN   33
 #define CS_PIN   32
 #define RST_PIN  25
@@ -92,6 +94,7 @@ void setup() {
   display.setup();
 
   // Start Setup
+  display.clear(0);
   display.clear(SATE_BACKGROUND);
   display.drawLine("Setup");
   delay(3000);

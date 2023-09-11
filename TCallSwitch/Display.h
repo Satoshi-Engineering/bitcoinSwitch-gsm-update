@@ -1,7 +1,8 @@
 #ifndef Display_h
 #define Display_h
 
-#include <Adafruit_SSD1351.h>
+//#include <Adafruit_SSD1351.h>
+#include "Adafruit_ILI9341.h"
 
 // Color definitions
 #define	BLACK           0x0000
@@ -15,7 +16,8 @@
 
 class Display {
   private:
-    Adafruit_SSD1351 tft;
+    //Adafruit_SSD1351 tft;
+    Adafruit_ILI9341 tft;
     int line = 0;
     int lineMax = 12;
     uint16_t width = 0;

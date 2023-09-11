@@ -1,17 +1,17 @@
-#include "QRCode_SSD1351.h"
+#include "QRCode_SPITFT.h"
 
 #include "qrencode.h"
 
-QRCode_SSD1351::QRCode_SSD1351(Adafruit_SSD1351 *display) {
+QRCode_SPITFT::QRCode_SPITFT(Adafruit_SPITFT *display) {
   this->display = display;
 }
 
-void QRCode_SSD1351::init() {
+void QRCode_SPITFT::init() {
   this->init(128, 128);
 }
 
 
-void QRCode_SSD1351::init(int width, int height) {
+void QRCode_SPITFT::init(int width, int height) {
   this->screenwidth = width;
   this->screenheight = height;
 
@@ -25,21 +25,19 @@ void QRCode_SSD1351::init(int width, int height) {
   offsetsY = (screenheight - (WD*multiply))/2;
 }
 
-void QRCode_SSD1351::drawPixel(int x, int y, int color) {
+void QRCode_SPITFT::drawPixel(int x, int y, int color) {
     uint16_t thecolor = color == 1 ? BLACK : WHITE;
 
     this->display->drawPixel(x, y, thecolor);
-    if (this->multiply>1) {
-        this->display->drawPixel(x + 1, y, thecolor);
-        this->display->drawPixel(x + 1, y + 1, thecolor);
-        this->display->drawPixel(x, y + 1, thecolor);
+    if (this->multiply > 1) {
+      this->display->fillRect(x, y, this->multiply, this->multiply, thecolor);
     }
 }
 
-void QRCode_SSD1351::screenwhite() {
+void QRCode_SPITFT::screenwhite() {
  this->display->fillScreen(WHITE);
 }
 
-void QRCode_SSD1351::screenupdate() {
+void QRCode_SPITFT::screenupdate() {
   // NOT USED
 }

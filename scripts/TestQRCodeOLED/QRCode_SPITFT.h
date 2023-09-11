@@ -1,9 +1,8 @@
-#ifndef QRCODE_SSD1351_H
-#define QRCODE_SSD1351_H
+#ifndef QRCode_SPITFT_H
+#define QRCode_SPITFT_H
 
 #include <Arduino.h>
-#include <Adafruit_SSD1351.h>
-
+#include <Adafruit_SPITFT.h>
 #include "qrcodedisplay.h"
 
 #define	BLACK           0x0000
@@ -15,13 +14,13 @@
 #define YELLOW          0xFFE0  
 #define WHITE           0xFFFF
 
-class QRCode_SSD1351 : public QRcodeDisplay {
+class QRCode_SPITFT : public QRcodeDisplay {
 	private:
-    Adafruit_SSD1351 *display;
+    Adafruit_SPITFT *display;
     void drawPixel(int x, int y, int color);
 
 	public:
-		QRCode_SSD1351(Adafruit_SSD1351 *display);
+		QRCode_SPITFT(Adafruit_SPITFT *display);
 
 		void init();
     void init(int width, int height);

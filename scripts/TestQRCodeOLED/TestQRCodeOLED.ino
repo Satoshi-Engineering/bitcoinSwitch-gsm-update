@@ -3,9 +3,17 @@
  ****************************************************/
 
 
-// Screen dimensions
+// Screen dimensions  1.27" OLED.
 #define SCREEN_WIDTH  128
-#define SCREEN_HEIGHT 128 // Change this to 96 for 1.27" OLED.
+#define SCREEN_HEIGHT 96
+
+// Screen dimensions  1.8" OLED.
+#define SCREEN_WIDTH  128
+#define SCREEN_HEIGHT 128
+
+// Screen dimensions 2.5 TFT
+#define SCREEN_WIDTH  240
+#define SCREEN_HEIGHT 320
 
 // You can use any (4 or) 5 pins 
 /*
@@ -17,8 +25,8 @@
 */
 
 // T-Call
-#define SCLK_PIN 18
 #define MOSI_PIN 14
+#define SCLK_PIN 18
 #define DC_PIN   33
 #define CS_PIN   32
 #define RST_PIN  25
@@ -35,11 +43,14 @@
 
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1351.h>
+#include "Adafruit_ILI9341.h"
+
 #include <SPI.h>
-#include "QRCode_SSD1351.h"
+#include "QRCode_SPITFT.h"
 
 // Option 1: use any pins but a little slower
-Adafruit_SSD1351 tft = Adafruit_SSD1351(SCREEN_WIDTH, SCREEN_HEIGHT, CS_PIN, DC_PIN, MOSI_PIN, SCLK_PIN, RST_PIN);  
+//Adafruit_SSD1351 tft = Adafruit_SSD1351(SCREEN_WIDTH, SCREEN_HEIGHT, CS_PIN, DC_PIN, MOSI_PIN, SCLK_PIN, RST_PIN);  
+Adafruit_ILI9341 tft = Adafruit_ILI9341(CS_PIN, DC_PIN, MOSI_PIN, SCLK_PIN, RST_PIN);  
 
 // Option 2: must use the hardware SPI pins 
 // (for UNO thats sclk = 13 and sid = 11) and pin 10 must be 
@@ -51,7 +62,7 @@ float p = 3.1415926;
 
 String lnurl = "lightning:LNURL1DPNOTAVALIDLNURLRWVF5HGUEWW35X2UMSD9JKCURV131313NRDAKJ7MRWW4EXCER9WE5KXEF0V9NOTVALIDWFKZ12313123DFYGAMDWEN4ZCTR2F98X4FK8ACXJM3AXYEZVCTDDA6KUAPAXQHRQVP3YEJ82UNPW35K7M3AXYCRQVQLHQ3DP";
 
-QRCode_SSD1351 qrcode(&tft);
+QRCode_SPITFT qrcode(&tft);
 
 void setup(void) {
   Serial.begin(115200);
@@ -68,7 +79,7 @@ void setup(void) {
   // WARNING: Sample non valid LNURL
   // WARNING: Library is default on QR Code Version 7 which can be too less for LNURLs
   // WARNING: I had to rewrite the library code (I Know it's so bad) from QR Code version 7 to 10
-  qrcode.init();
+  qrcode.init(240, 320);
   qrcode.create(lnurl);
   
   Serial.println("done");

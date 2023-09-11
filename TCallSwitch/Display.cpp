@@ -1,18 +1,21 @@
 #include "Display.h"
 
 #include <Adafruit_GFX.h>
-#include <Adafruit_SSD1351.h>
+//#include <Adafruit_SSD1351.h>
+#include "Adafruit_ILI9341.h"
 #include <SPI.h>
-#include "QRCode_SSD1351.h"
+#include "QRCode_SPITFT.h"
 
-#include "bitmaps/Logo.h"
+#include "bitmaps/Logo240x240.h"
 #include "bitmaps/LightningBolt.h"
 #include "bitmaps/Warning.h"
 
-#define LINE_HEIGHT 10
+#define LINE_HEIGHT 20
+#define DEFAULT_TEXT_SIZE 2
 
 Display::Display(uint16_t width_, uint16_t height_, int8_t cs_pin_, int8_t dc_pin_, int8_t mosi_pin_, int8_t sclk_pin_, int8_t rst_pin_)
-  : tft(width_, height_, cs_pin_, dc_pin_, mosi_pin_, sclk_pin_, rst_pin_) {
+    : tft(cs_pin_, dc_pin_, mosi_pin_, sclk_pin_, rst_pin_) {
+//  : tft(width_, height_, cs_pin_, dc_pin_, mosi_pin_, sclk_pin_, rst_pin_) {
   this->width = width_;
   this->height = height_;
 
@@ -24,13 +27,14 @@ Display::Display(uint16_t width_, uint16_t height_, int8_t cs_pin_, int8_t dc_pi
 
 void Display::setup() {
   tft.begin();
-  tft.setTextSize(1);
+  tft.setTextSize(DEFAULT_TEXT_SIZE);
 }
 
 void Display::clear(int background) {
   switch (background) {
     case -1:
-      tft.drawRGBBitmap(0, 0, LogoBitmap, 128, 128);
+      tft.fillScreen(BLACK);
+      tft.drawRGBBitmap(0, 0, LogoBitmap, 240, 240);
       break;
 
     default:
@@ -57,11 +61,11 @@ void Display::drawLine(String text, uint16_t color) {
 void Display::payed(int part) {
   if (part == 0) {
     tft.fillScreen(BLACK);
-    tft.setTextSize(4);
-    tft.setCursor(15, this->height * 0.5 + 30);
+    tft.setTextSize(DEFAULT_TEXT_SIZE * 4);
+    tft.setCursor(15, tft.height() * 0.5 + 30);
     tft.print("PAID");
-    tft.setTextSize(1);
-    tft.drawRGBBitmap(46, 10, LightningBoltBitmap, 36, 64);
+    tft.setTextSize(DEFAULT_TEXT_SIZE);
+    tft.drawRGBBitmap((tft.width() - 36) / 2 , 10, LightningBoltBitmap, 36, 64);
   }
 
   if (part == 1) {
@@ -70,25 +74,25 @@ void Display::payed(int part) {
       delay(250);
       tft.fillRect(46, 10, 36, 64, BLACK);
       delay(250);
-      tft.drawRGBBitmap(46, 10, LightningBoltBitmap, 36, 64);
+      tft.drawRGBBitmap((tft.width() - 36), 10, LightningBoltBitmap, 36, 64);
     }
   }
 }
 
 void Display::hardwareWaitingScreen() {
   clear(-1);
-  drawLine("");
-  drawLine("Satoshi Engineering");
-  drawLine("We make IT easy");
-  drawLine("");
+  tft.setCursor(5, tft.height() - LINE_HEIGHT * 2);
+  tft.setTextColor(WHITE);
+  tft.println("Satoshi Engineering");
+  tft.println("We make IT easy!");
 }
 
 void Display::warning(String text) {
   tft.fillScreen(BLACK);
-  tft.setTextSize(3);
+  tft.setTextSize(DEFAULT_TEXT_SIZE * 3);
   tft.setCursor(8, this->height * 0.5 + 30);
   tft.print((char *)text.c_str());
-  tft.setTextSize(1);
+  tft.setTextSize(DEFAULT_TEXT_SIZE);
   tft.drawRGBBitmap(32, 5, WarningBitmap, 64, 64);
 }
 
@@ -110,9 +114,14 @@ void Display::updateSignalStrength(int16_t strength) {
 }
 
 void Display::qrcode(String text) {
-  QRCode_SSD1351 qrcode(&tft);
-  qrcode.init();
+  QRCode_SPITFT qrcode(&tft);
+  qrcode.init(tft.width(), tft.height());
   qrcode.create(text);
+
+  tft.setCursor(5, tft.height() - LINE_HEIGHT * 2);
+  tft.setTextColor(BLACK);
+  tft.println("Satoshi Engineering");
+  tft.println("We make IT easy!");
 }
 
 uint16_t color565(uint8_t red, uint8_t green, uint8_t blue) {
