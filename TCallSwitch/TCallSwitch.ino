@@ -8,25 +8,25 @@
 #define PORTAL_PIN 2
 
 // TTGO T-Call pins
-#define MODEM_RST            5
-#define MODEM_PWKEY          4
-#define MODEM_POWER_ON       23
-#define MODEM_TX             27
-#define MODEM_RX             26
-#define I2C_SDA              21
-#define I2C_SCL              22
+#define MODEM_RST 5
+#define MODEM_PWKEY 4
+#define MODEM_POWER_ON 23
+#define MODEM_TX 27
+#define MODEM_RX 26
+#define I2C_SDA 21
+#define I2C_SCL 22
 
 // Display
 //#define SCREEN_WIDTH  128
 //#define SCREEN_HEIGHT 128
-#define SCREEN_WIDTH 240  ///< ILI9341 max TFT width
-#define SCREEN_HEIGHT 320 ///< ILI9341 max TFT height
+#define SCREEN_WIDTH 240   ///< ILI9341 max TFT width
+#define SCREEN_HEIGHT 320  ///< ILI9341 max TFT height
 
 #define MOSI_PIN 14
 #define SCLK_PIN 18
-#define DC_PIN   33
-#define CS_PIN   32
-#define RST_PIN  25
+#define DC_PIN 33
+#define CS_PIN 32
+#define RST_PIN 25
 
 // Set serial for debug console (to Serial Monitor, default speed 115200)
 #define SerialMon Serial
@@ -34,8 +34,8 @@
 #define SerialAT Serial1
 
 // Configure TinyGSM library
-#define TINY_GSM_MODEM_SIM800      // Modem is SIM800
-#define TINY_GSM_RX_BUFFER   1024  // Set RX buffer to 1Kb
+#define TINY_GSM_MODEM_SIM800    // Modem is SIM800
+#define TINY_GSM_RX_BUFFER 1024  // Set RX buffer to 1Kb
 
 // Define the serial console for debug prints, if needed
 //#define DUMP_AT_COMMANDS
@@ -47,11 +47,11 @@
 #include "Display.h"
 
 #ifdef DUMP_AT_COMMANDS
-  #include <StreamDebugger.h>
-  StreamDebugger debugger(SerialAT, SerialMon);
-  TinyGsm modem(debugger);
+#include <StreamDebugger.h>
+StreamDebugger debugger(SerialAT, SerialMon);
+TinyGsm modem(debugger);
 #else
-  TinyGsm modem(SerialAT);
+TinyGsm modem(SerialAT);
 #endif
 
 // I2C for SIM800 (to keep it running when powered from battery)
@@ -63,16 +63,16 @@ WebSocketClient wsClient(gsmclient, "", 80);
 
 #define WEBSOCKET_LOOP_DELAY 250
 
-#define IP5306_ADDR          0x75
-#define IP5306_REG_SYS_CTL0  0x00
+#define IP5306_ADDR 0x75
+#define IP5306_REG_SYS_CTL0 0x00
 
-bool setPowerBoostKeepOn(int en){
+bool setPowerBoostKeepOn(int en) {
   I2CPower.beginTransmission(IP5306_ADDR);
   I2CPower.write(IP5306_REG_SYS_CTL0);
   if (en) {
-    I2CPower.write(0x37); // Set bit1: 1 enable 0 disable boost keep on
+    I2CPower.write(0x37);  // Set bit1: 1 enable 0 disable boost keep on
   } else {
-    I2CPower.write(0x35); // 0x37 is default reg value
+    I2CPower.write(0x35);  // 0x37 is default reg value
   }
   return I2CPower.endTransmission() == 0;
 }
@@ -95,6 +95,7 @@ void setup() {
 
   // Start Setup
   display.clear(0);
+
   display.clear(SATE_BACKGROUND);
   display.drawLine("Setup");
   delay(3000);
@@ -116,8 +117,8 @@ void setup() {
     Serial.println("USB Config triggered");
     display.drawLine("Config Mode");
     display.drawLine("YES", GREEN);
-    
-    config.configOverSerialPort();    
+
+    config.configOverSerialPort();
   } else {
     display.drawLine("Found", GREEN);
   }
@@ -173,7 +174,7 @@ void setup() {
   display.drawLine(modemInfo);
 
   // Unlock your SIM card with a PIN if needed
-  if (configData.gsmPIN.length() > 0 && modem.getSimStatus() != 3 ) {
+  if (configData.gsmPIN.length() > 0 && modem.getSimStatus() != 3) {
     modem.simUnlock(configData.gsmPIN.c_str());
   }
 }
@@ -202,13 +203,13 @@ void loop() {
   display.updateSignalStrength(modem.getSignalQuality());
 
   // ----------- CHECK: GPRS
-  if (modem.isGprsConnected()) { 
-      SerialMon.println("GPRS connected"); 
-      display.drawLine("GPRS connected");
+  if (modem.isGprsConnected()) {
+    SerialMon.println("GPRS connected");
+    display.drawLine("GPRS connected");
   } else {
     SerialMon.print("GPRS connecting to ");
     SerialMon.print(configData.gsmAPN);
-    display.drawLine("GPRS connecting to");
+    display.drawLine("GPRS connecting");
 
     if (!modem.gprsConnect(configData.gsmAPN.c_str(), configData.gsmGPRSUser.c_str(), configData.gsmGPRSPass.c_str())) {
       SerialMon.println(" - FAIL");
@@ -217,7 +218,7 @@ void loop() {
       SerialMon.println(("Retry in 2 sec"));
       delay(2000);
       return;
-    } 
+    }
 
     SerialMon.println(" - OK");
     display.drawLine(configData.gsmAPN, GREEN);
@@ -234,10 +235,10 @@ void loop() {
     display.drawLine("WebSocket connected");
   } else {
     SerialMon.print("WebSocket connecting: ");
-    display.drawLine("WebSocket connecting");
+    display.drawLine("WebSocket connect");
 
-    bool success = wsClient.begin("/api/v1/ws/" + configData.deviceId) == 0; // 0 if successful, else error
-    
+    bool success = wsClient.begin("/api/v1/ws/" + configData.deviceId) == 0;  // 0 if successful, else error
+
     if (!success) {
       display.drawLine("FAIL", RED);
       SerialMon.println("FAIL");
@@ -294,7 +295,7 @@ void loop() {
 
         if (!lnurlPauseActive) {
           display.payed(0);
-  
+
           pinMode(getValue(payloadStr, '-', 0).toInt(), OUTPUT);
           digitalWrite(getValue(payloadStr, '-', 0).toInt(), HIGH);
           delay(getValue(payloadStr, '-', 1).toInt());
@@ -303,6 +304,7 @@ void loop() {
           display.payed(1);
 
           display.hardwareWaitingScreen();
+          display.progressBar(0);
 
           lnurlPauseStart = millis();
           lnurlPauseActive = true;
@@ -315,9 +317,14 @@ void loop() {
     }
 
     // Application Wainting Time
+    if (lnurlPauseActive) {
+      display.progressBar((millis() - lnurlPauseStart) / float(configData.lnurlWaitingTime));
+    }
+
+    // Application Wainting Time Finished
     if (lnurlPauseActive && (millis() - lnurlPauseStart > configData.lnurlWaitingTime)) {
       lnurlPauseActive = false;
-      display.qrcode(configData.lnurl);          
+      display.qrcode(configData.lnurl);
     }
 
     // Update GSM Connection Bars
@@ -330,7 +337,7 @@ void loop() {
       SerialMon.println("HTTP Client disconnected");
       display.warning(" HTTP");
       delay(2000);
-      break;      
+      break;
     }
 
     // Check Internet Connection
@@ -344,7 +351,7 @@ void loop() {
     }
 
     // wait
-    delay(WEBSOCKET_LOOP_DELAY);    
+    delay(WEBSOCKET_LOOP_DELAY);
   }
 
   SerialMon.print("Server disconnected after ");
@@ -353,17 +360,17 @@ void loop() {
 
 //////////////////HELPERS///////////////////
 String getValue(String data, char separator, int index) {
-    int found = 0;
-    int strIndex[] = { 0, -1 };
-    int maxIndex = data.length() - 1;
-    for (int i = 0; i <= maxIndex && found <= index; i++) {
-        if (data.charAt(i) == separator || i == maxIndex) {
-            found++;
-            strIndex[0] = strIndex[1] + 1;
-            strIndex[1] = (i == maxIndex) ? i+1 : i;
-        }
+  int found = 0;
+  int strIndex[] = { 0, -1 };
+  int maxIndex = data.length() - 1;
+  for (int i = 0; i <= maxIndex && found <= index; i++) {
+    if (data.charAt(i) == separator || i == maxIndex) {
+      found++;
+      strIndex[0] = strIndex[1] + 1;
+      strIndex[1] = (i == maxIndex) ? i + 1 : i;
     }
-    return found > index ? data.substring(strIndex[0], strIndex[1]) : "";
+  }
+  return found > index ? data.substring(strIndex[0], strIndex[1]) : "";
 }
 
 String millitsToReadable(unsigned long currentMillis) {
@@ -374,7 +381,7 @@ String millitsToReadable(unsigned long currentMillis) {
 
   seconds %= 60;
   minutes %= 60;
-  hours %= 24;  
+  hours %= 24;
 
-  return (days > 0 ? String(days) + " days " : "") + (hours < 10 ? "0" : "") + String(hours) + ":" + (minutes < 10 ? "0" : "") + String(minutes) + ":" + (seconds < 10 ? "0" : "") + String(seconds); 
+  return (days > 0 ? String(days) + " days " : "") + (hours < 10 ? "0" : "") + String(hours) + ":" + (minutes < 10 ? "0" : "") + String(minutes) + ":" + (seconds < 10 ? "0" : "") + String(seconds);
 }

@@ -60,6 +60,11 @@ int16_t strength = modem.getSignalQuality()
 99 not known or not detectable
 2 ... 30 --> Check Table here: https://m2msupport.net/m2msupport/atcsq-signal-quality/
 ```
+#### Create Images
+- Use https://javl.github.io/image2cpp/
+- Option: Arduino Code, Single Bitmap
+- Option: Horizontal 2 Bytes
+
 
 #### Ghost interferance on relay pin
 

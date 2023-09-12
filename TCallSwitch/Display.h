@@ -13,6 +13,7 @@
 #define MAGENTA         0xF81F
 #define YELLOW          0xFFE0  
 #define WHITE           0xFFFF
+#define SATE_PURPLE     0x69F2
 
 class Display {
   private:
@@ -36,6 +37,7 @@ class Display {
     void drawLine(String text, uint16_t color = WHITE);
     void qrcode(String text);
     void payed(int part);
+    void progressBar(float percent);
     void hardwareWaitingScreen();
 
     void warning(String text);
