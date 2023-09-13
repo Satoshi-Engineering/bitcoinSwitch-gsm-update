@@ -28,6 +28,7 @@ Display::Display(uint16_t width_, uint16_t height_, int8_t cs_pin_, int8_t dc_pi
 
 void Display::setup() {
   tft.begin();
+  tft.setRotation(2);
   tft.setTextSize(DEFAULT_TEXT_SIZE);
 }
 
