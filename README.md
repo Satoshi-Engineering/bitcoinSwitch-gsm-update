@@ -25,14 +25,14 @@ too.
 2 Portal Pin
 
 ### TFT ### 
-5V   3.3V/5V Power input
-GND  GND
+5V   (violet)  3.3V/5V Power input
+GND  (white)   GND
 
-14   DIN / MOSI Data input
-18   SCL Clock input
-33   DC Data/command signal selection, low level indicates command, high level indicates data
-32   CS Chip select, active low (because 17 was not found)
-25   RST (because 5 is used for the modem)
+14   (green)   DIN / MOSI Data input
+18   (orange)  SCL Clock input
+33   (yellow)  DC Data/command signal selection, low level indicates command, high level indicates data
+32   (blue)    CS Chip select, active low (because 17 was not found)
+25   (brown)   RST (because 5 is used for the modem)
 
 ### Relay ### 
 12   IN of Relay
