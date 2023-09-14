@@ -21,13 +21,17 @@ too.
 
 ### Wireing
 ```
-### OLEAD ### 
+
+2 Portal Pin
+
+### TFT ### 
 5V   3.3V/5V Power input
 GND  GND
-23   DIN / MOSI Data input
+
+14   DIN / MOSI Data input
 18   SCL Clock input
-32   CS Chip select, active low (because 17 was not found)
 33   DC Data/command signal selection, low level indicates command, high level indicates data
+32   CS Chip select, active low (because 17 was not found)
 25   RST (because 5 is used for the modem)
 
 ### Relay ### 
