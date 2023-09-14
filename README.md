@@ -25,6 +25,7 @@ too.
 2 Portal Pin
 
 ### TFT ### 
+<<<<<<< Updated upstream
 5V   (violet)  3.3V/5V Power input
 GND  (white)   GND
 
@@ -33,6 +34,19 @@ GND  (white)   GND
 33   (yellow)  DC Data/command signal selection, low level indicates command, high level indicates data
 32   (blue)    CS Chip select, active low (because 17 was not found)
 25   (brown)   RST (because 5 is used for the modem)
+=======
+VIOLET  5V   3.3V/5V Power input
+WHITE   GND  G ND
+
+GREEN   14   DIN / MOSI Data input
+ORANGE  18   SCL Clock input
+YELLOW  32   CS Chip select, active low (because 17 was not found)
+BLUE    33   DC Data/command signal selection, low level indicates command, high level indicates data
+BROWN   25   RST (because 5 is used for the modem)
+GRAY    N.C.
+
+(Colorcoding of this TFT Display)
+>>>>>>> Stashed changes
 
 ### Relay ### 
 12   IN of Relay
@@ -45,6 +59,12 @@ FYI: GPI: GPIO34-39 can only be set as input mode and do not have software-enabl
 I needed to extend the current bitcoinSwitch config for the LNURL on the display and the gsm network. See [elements.json.example](elements.json.example).
 
 ### Dev Notes
+
+#### QR Code Version 9 is neede
+
+The library is broken - at least how to set the version
+I needed to change directly the .c files (look a version7 and copy and paste the selection part (first 3 lines) to version9 file)
+
 
 #### Portal Pin change to 2
 
