@@ -4,7 +4,7 @@
 //#include <Adafruit_SSD1351.h>
 #include "Adafruit_ILI9341.h"
 #include <SPI.h>
-#include "QRCode_SPITFT.h"
+#include <QRCodeGFX.h>
 
 #include "bitmaps/Logo48x48.h"
 #include "bitmaps/Logo240x240.h"
@@ -88,9 +88,10 @@ void Display::payed(int part) {
 }
 
 void Display::qrcode(String text) {
-  QRCode_SPITFT qrcode(&tft);
-  qrcode.init(tft.width(), tft.height());
-  qrcode.create(text);
+  tft.fillScreen(WHITE);
+  QRCodeGFX qrcode(tft);
+  qrcode.setScale(4);
+  qrcode.draw(text, 10, 50);
 
   tft.drawRGBBitmap((tft.width() - 48) / 2, 2, Logo48_WHITE, 48, 48);
   tft.setTextColor(BLACK);

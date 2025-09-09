@@ -1,4 +1,5 @@
 # Bitcoin Switch with Gsm and OLED Display
+
 _by [#sathoshiengineeringcrew](https://satoshiengineering.com/)_
 
 [![MIT License Badge](docs/img/license-badge.svg)](LICENSE)
@@ -60,11 +61,7 @@ I needed to extend the current bitcoinSwitch config for the LNURL on the display
 
 ### Dev Notes
 
-#### QR Code Version 9 is neede
-
-The library is broken - at least how to set the version
-I needed to change directly the .c files (look a version7 and copy and paste the selection part (first 3 lines) to version9 file)
-
+- QRCode Library: [Github](https://github.com/wallysalami/QRCodeGFX)
 
 #### Portal Pin change to 2
 
@@ -84,11 +81,12 @@ int16_t strength = modem.getSignalQuality()
 99 not known or not detectable
 2 ... 30 --> Check Table here: https://m2msupport.net/m2msupport/atcsq-signal-quality/
 ```
+
 #### Create Images
+
 - Use https://javl.github.io/image2cpp/
 - Option: Arduino Code, Single Bitmap
 - Option: Horizontal 2 Bytes
-
 
 #### Ghost interferance on relay pin
 
